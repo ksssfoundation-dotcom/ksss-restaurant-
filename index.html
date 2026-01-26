@@ -9,18 +9,13 @@
 body{margin:0;font-family:Arial;background:#111;color:#fff}
 header{background:#000;padding:12px;text-align:center}
 h2{margin:0;color:#ffd700}
-
 .tableBox{text-align:center;margin-top:6px;font-size:16px}
 
 .category{background:#d32f2f;padding:8px;margin-top:15px;text-align:center;font-weight:bold}
 .item{border-bottom:1px solid #333;padding:8px}
 .top{display:flex;justify-content:space-between;margin-bottom:6px}
 
-.plate button{
-padding:4px 6px;margin-right:5px;
-border:none;border-radius:4px;
-background:#555;color:#fff;font-size:13px
-}
+.plate button{padding:4px 6px;margin-right:5px;border:none;border-radius:4px;background:#555;color:#fff;font-size:13px}
 .plate button.active{background:#388e3c}
 
 .qty{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
@@ -28,19 +23,9 @@ background:#555;color:#fff;font-size:13px
 .qty span{min-width:22px;text-align:center}
 
 .pack{font-size:14px}
-
 .total{font-size:22px;text-align:center;margin:15px;color:#0f0}
+
 .place{width:90%;margin:auto;display:block;font-size:18px;padding:10px;background:#d32f2f;color:#fff;border:none;border-radius:6px}
-
-.adminBtn{text-align:center;margin-top:10px}
-.admin{display:none;background:#000;margin:10px;padding:10px;border:1px solid #333}
-.admin h3{color:#ffd700;margin-top:0}
-
-.priceRow{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}
-.priceRow input{width:70px;padding:4px}
-
-.stat{border-bottom:1px solid #333;padding:6px 0}
-.reset{background:#ff5252;border:none;color:#fff;padding:6px 10px;border-radius:4px;margin-top:10px}
 
 .container{max-width:520px;margin:auto}
 footer{text-align:center;font-size:14px;padding:8px;background:#000}
@@ -62,31 +47,26 @@ Table No: <b id="tableNo">N/A</b>
 
 <div class="total">Total ₹ <span id="total">0</span></div>
 <button class="place" onclick="placeOrder()">Place Order</button>
-
-<div class="adminBtn">
-<button onclick="adminLogin()">Admin Panel</button>
-</div>
-
-<div class="admin" id="admin">
-<h3>ADMIN PRICE EDIT</h3>
-<div id="priceEdit"></div>
-
-<h3>DAILY SUMMARY</h3>
-<div class="stat">Orders Today: <b id="orderCount">0</b></div>
-<div class="stat">Total Sales: ₹ <b id="salesTotal">0</b></div>
-<button class="reset" onclick="resetDaily()">Reset Daily</button>
-</div>
 </div>
 
 <footer>QR POS System</footer>
 
 <script>
-const params=new URLSearchParams(location.search);
-let tableNo=params.get("table");
-if(!(tableNo>=1 && tableNo<=8)) tableNo="N/A";
-document.getElementById("tableNo").innerText=tableNo;
+/* ---------- TABLE LOGIC (FIXED) ---------- */
+const params = new URLSearchParams(window.location.search);
+let tableParam = params.get("table");
+let tableNo = "N/A";
 
-let defaultMenu=[
+if(tableParam !== null){
+  let t = parseInt(tableParam,10);
+  if(!isNaN(t) && t>=1 && t<=8){
+    tableNo = t;
+  }
+}
+document.getElementById("tableNo").innerText = tableNo;
+
+/* ---------- MENU ---------- */
+let menuData=[
 {category:"🥢 Chinese",items:[
 {name:"Veg Chowmein",price:60},
 {name:"Paneer Chowmein",price:80},
@@ -104,14 +84,11 @@ let defaultMenu=[
 ]}
 ];
 
-let menuData=JSON.parse(localStorage.getItem("menuData"))||defaultMenu;
 let cart={},total=0;
-let sales=Number(localStorage.getItem("sales"))||0;
-let orders=Number(localStorage.getItem("orders"))||0;
-
 const menuDiv=document.getElementById("menu");
 const totalSpan=document.getElementById("total");
 
+/* ---------- LOAD MENU ---------- */
 function loadMenu(){
 menuDiv.innerHTML="";
 cart={};
@@ -120,26 +97,32 @@ menuDiv.innerHTML+=`<div class="category">${cat.category}</div>`;
 cat.items.forEach(i=>{
 let id=i.name.replace(/\s/g,"");
 cart[id]={name:i.name,price:i.price,qty:0,pack:false};
+
 menuDiv.innerHTML+=`
 <div class="item">
 <div class="top"><b>${i.name}</b><span>₹${i.price}</span></div>
+
 <div class="plate">
 <button class="active" onclick="setPlate('${id}',${i.price},this)">Full</button>
 <button onclick="setPlate('${id}',${i.price*0.6},this)">Half</button>
 </div>
+
 <div class="qty">
 <div>
 <button onclick="qty('${id}',-1)">−</button>
 <span id="q_${id}">0</span>
 <button onclick="qty('${id}',1)">+</button>
 </div>
-<label class="pack"><input type="checkbox" onchange="setPack('${id}',this)"> 📦 Pack</label>
+<label class="pack">
+<input type="checkbox" onchange="setPack('${id}',this)"> 📦 Pack
+</label>
 </div>
 </div>`;
 });
 });
 }
 
+/* ---------- CART ---------- */
 function setPlate(id,price,btn){
 cart[id].price=Math.round(price);
 btn.parentElement.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
@@ -152,22 +135,19 @@ if(cart[id].qty<0)cart[id].qty=0;
 document.getElementById("q_"+id).innerText=cart[id].qty;
 calc();
 }
-function setPack(id,c){cart[id].pack=c.checked;}
+function setPack(id,c){cart[id].pack=c.checked}
 function calc(){
 total=0;
 Object.values(cart).forEach(i=>total+=i.price*i.qty);
 totalSpan.innerText=total;
 }
 
+/* ---------- PLACE ORDER (BILL FIXED) ---------- */
 function placeOrder(){
 if(total===0){alert("No items selected");return;}
 
-sales+=total; orders++;
-localStorage.setItem("sales",sales);
-localStorage.setItem("orders",orders);
-
 let now=new Date();
-let dt=now.toLocaleDateString()+" "+now.toLocaleTimeString();
+let dateTime=now.toLocaleDateString()+" "+now.toLocaleTimeString();
 
 let items=Object.values(cart).filter(i=>i.qty>0);
 
@@ -175,7 +155,7 @@ let billHTML=`
 <h3 style="text-align:center">KssS Restaurant</h3>
 <p style="text-align:center">100% Veg</p>
 <hr>
-<b>Date:</b> ${dt}<br>
+<b>Date:</b> ${dateTime}<br>
 <b>Table:</b> ${tableNo}
 <hr>
 ${items.map(i=>`
@@ -204,40 +184,7 @@ ${billHTML}
 `);
 w.document.close();
 
-loadMenu(); total=0; totalSpan.innerText=0;
-}
-
-function adminLogin(){
-let p=prompt("Admin Password");
-if(p==="1234"){
-admin.style.display="block";
-orderCount.innerText=orders;
-salesTotal.innerText=sales;
-loadPriceEditor();
-}else alert("Wrong password");
-}
-
-function loadPriceEditor(){
-priceEdit.innerHTML="";
-menuData.forEach(c=>c.items.forEach(i=>{
-priceEdit.innerHTML+=`
-<div class="priceRow">
-<span>${i.name}</span>
-<input type="number" value="${i.price}" onchange="updatePrice('${i.name}',this.value)">
-</div>`;
-}));
-}
-function updatePrice(name,val){
-menuData.forEach(c=>c.items.forEach(i=>{if(i.name===name)i.price=Number(val);}));
-localStorage.setItem("menuData",JSON.stringify(menuData));
-loadMenu();
-}
-function resetDaily(){
-if(confirm("Reset today?")){
-sales=0;orders=0;
-localStorage.clear();
-loadMenu();
-}
+loadMenu();total=0;totalSpan.innerText=0;
 }
 
 loadMenu();
