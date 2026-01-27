@@ -50,7 +50,7 @@ border-radius:4px
 
 .total{font-size:22px;text-align:center;margin:15px;color:#0f0}
 
-.place, .adminBtn{
+.place,.adminBtn{
 width:90%;
 margin:8px auto;
 display:block;
@@ -95,10 +95,11 @@ document.getElementById("tableNo").innerText = tableNo;
 
 /* ===== IMAGE ===== */
 function foodImg(name){
-  return "https://source.unsplash.com/600x400/?" + encodeURIComponent(name + " food");
+  return "https://source.unsplash.com/600x400/?" +
+         encodeURIComponent(name + " food");
 }
 
-/* ===== FULL MENU FROM POSTER ===== */
+/* ===== FULL MENU (POSTER) ===== */
 var menuData = [
 {category:"Chinese",items:[
 {name:"Veg Chowmein",half:40,full:70,enable:true},
@@ -171,7 +172,7 @@ if(!i.enable && !adminMode) return;
 var id=i.name.replace(/\s/g,"_");
 cart[id]={name:i.name,qty:0,price:0,plate:""};
 
-var priceHTML="", plateHTML="";
+var priceHTML="",plateHTML="";
 if(i.half){
 priceHTML="₹"+i.half+" / ₹"+i.full;
 plateHTML =
@@ -204,7 +205,9 @@ plateHTML+
 function setPlate(id,plate,price,btn){
 cart[id].price=price;
 cart[id].plate=plate;
-Array.from(btn.parentNode.children).forEach(b=>b.classList.remove("active"));
+Array.from(btn.parentNode.children).forEach(function(b){
+b.classList.remove("active");
+});
 btn.classList.add("active");
 calc();
 }
@@ -215,7 +218,9 @@ calc();
 }
 function calc(){
 total=0;
-Object.values(cart).forEach(i=>total+=i.price*i.qty);
+Object.values(cart).forEach(function(i){
+total+=i.price*i.qty;
+});
 totalBox.innerText=total;
 }
 
@@ -232,27 +237,31 @@ if(total===0){alert("No items selected");return;}
 var bill="", kitchen="";
 Object.values(cart).forEach(function(i){
 if(i.qty>0){
-bill += i.name+" ("+i.plate+") x"+i.qty+" = ₹"+(i.qty*i.price)+"<br>";
-kitchen += i.name+" ("+i.plate+") x"+i.qty+"<br>";
+bill+=i.name+" ("+i.plate+") x"+i.qty+" = ₹"+(i.qty*i.price)+"<br>";
+kitchen+=i.name+" ("+i.plate+") x"+i.qty+"<br>";
 }
 });
 
+/* BILL */
 var b=window.open("");
 b.document.write(
-"<body style='font-family:monospace;width:260px'>"+
+"<!DOCTYPE html><html><body onload='window.print()' "+
+"style='font-family:monospace;width:260px'>"+
 "<center><b>KssS Restaurant</b></center><hr>"+
 "Table: "+tableNo+"<br>"+bill+
 "<hr><b>Total: ₹"+total+"</b>"+
-"<script>window.print()</script></body>"
+"</body></html>"
 );
 b.document.close();
 
+/* KITCHEN */
 var k=window.open("");
 k.document.write(
-"<body style='font-family:monospace;width:260px' onload='window.print()'>"+
+"<!DOCTYPE html><html><body onload='window.print()' "+
+"style='font-family:monospace;width:260px'>"+
 "<center><b>KITCHEN SLIP</b></center><hr>"+
 "Table: "+tableNo+"<br>"+kitchen+
-"</body>"
+"</body></html>"
 );
 k.document.close();
 
@@ -264,5 +273,4 @@ loadMenu();
 </script>
 
 </body>
-  </html>
-  
+</html>
