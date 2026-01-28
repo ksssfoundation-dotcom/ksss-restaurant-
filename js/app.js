@@ -1,3 +1,13 @@
+// =======================
+// TABLE NUMBER (from QR)
+// =======================
+const params = new URLSearchParams(window.location.search);
+const tableNo = params.get("table") || "N/A";
+document.getElementById("tableInfo").innerText = "Table No: " + tableNo;
+
+// =======================
+// FULL MENU DATA
+// =======================
 const menuData = [
   {
     category: "Chinese",
@@ -25,7 +35,6 @@ const menuData = [
       { name: "Chilli Potato", half: 50, full: 100 },
       { name: "Honey Chilli Potato", half: 60, full: 120 },
       { name: "Spring Roll", half: 30, full: 60 },
-      { name: "Spring Roll Twin", full: 80 },
       { name: "Veg Burger", full: 30 },
       { name: "Special Burger", full: 50 }
     ]
@@ -39,8 +48,8 @@ const menuData = [
       { name: "Onion Dosa", full: 100 },
       { name: "Paneer Dosa", full: 120 },
       { name: "Veg Uttapam", full: 120 },
-      { name: "Idli Sambhar (2 Pc)", full: 30 },
-      { name: "Sambhar Vada (1 Pc)", full: 30 }
+      { name: "Sambhar Vada (1 Pc)", full: 30 },
+      { name: "Idli Sambhar (2 Pc)", full: 30 }
     ]
   },
 
@@ -86,29 +95,90 @@ const menuData = [
     items: [
       { name: "Oreo Shake", full: 90 },
       { name: "Chocolate Shake", full: 90 },
-      { name: "KitKat Shake", full: 90 },
-      { name: "Banana Shake", full: 90 },
-      { name: "Mango Shake", full: 90 },
-      { name: "Vanilla Shake", full: 90 }
+      { name: "KitKat Shake", full: 100 },
+      { name: "Banana Shake", full: 70 },
+      { name: "Mango Shake", full: 80 }
     ]
   },
 
   {
-    category: "Hot & Cold",
+    category: "Tea & Coffee",
     items: [
       { name: "Tea", full: 15 },
       { name: "Hot Coffee", full: 50 },
       { name: "Cold Coffee", full: 90 },
       { name: "Cold Coffee with Ice Cream", full: 120 }
     ]
-  },
-
-  {
-    category: "Combos",
-    items: [
-      { name: "Combo 1 (Rice + Manchurian Gravy)", full: 120 },
-      { name: "Combo 2 (Noodles + Chilli Paneer)", full: 150 },
-      { name: "Combo 3 (Noodles + Manchurian)", full: 100 }
-    ]
   }
 ];
+
+// =======================
+// CART
+// =======================
+let cart = [];
+
+// =======================
+// RENDER MENU
+// =======================
+const menuDiv = document.getElementById("menu");
+
+menuData.forEach(section => {
+  const sectionDiv = document.createElement("div");
+  sectionDiv.innerHTML = `<h2>${section.category}</h2>`;
+  sectionDiv.style.marginTop = "20px";
+
+  const grid = document.createElement("div");
+  grid.style.display = "grid";
+  grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(160px, 1fr))";
+  grid.style.gap = "12px";
+
+  section.items.forEach(item => {
+    const price = item.full;
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.background = "#1e1e1e";
+    card.style.padding = "10px";
+    card.style.borderRadius = "8px";
+    card.style.textAlign = "center";
+
+    card.innerHTML = `
+      <h4>${item.name}</h4>
+      <p>₹${price}</p>
+      <button>Add</button>
+    `;
+
+    card.querySelector("button").onclick = () => {
+      cart.push({ name: item.name, price });
+      alert(item.name + " added");
+    };
+
+    grid.appendChild(card);
+  });
+
+  sectionDiv.appendChild(grid);
+  menuDiv.appendChild(sectionDiv);
+});
+
+// =======================
+// PLACE ORDER
+// =======================
+document.getElementById("placeOrderBtn").onclick = () => {
+  if (cart.length === 0) {
+    alert("Cart is empty");
+    return;
+  }
+
+  const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+
+  orders.push({
+    table: tableNo,
+    items: cart,
+    status: "New",
+    time: new Date().toLocaleString()
+  });
+
+  localStorage.setItem("orders", JSON.stringify(orders));
+  cart = [];
+
+  alert("Order placed successfully!");
+};
