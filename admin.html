@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel - KssS Restaurant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<h2>Admin Panel</h2>
+
+<div id="loginBox">
+  <input type="password" id="adminPass" placeholder="Enter Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="adminPanel" style="display:none;">
+  <h3>Live Orders</h3>
+  <div id="orders"></div>
+
+  <h3>Edit Prices</h3>
+  <div id="priceEditor"></div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
