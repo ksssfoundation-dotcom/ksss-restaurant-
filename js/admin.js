@@ -1,79 +1,54 @@
-/**********************
- 🔐 SIMPLE ADMIN LOGIN
-***********************/
-const PASS = "1234";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-function login() {
-  const p = document.getElementById("adminPass").value;
-  if (p !== PASS) {
-    alert("Wrong password");
-    return;
-  }
+const firebaseConfig = {
+  apiKey: "AIzaSyDT7ZsaAd3R4UWf0RvdQ27UblO2gxr14z0",
+  authDomain: "ksss-restaurant-7d0cb.firebaseapp.com",
+  projectId: "ksss-restaurant-7d0cb"
+};
 
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("adminPanel").style.display = "block";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.login = () => {
+  if(document.getElementById("adminPass").value!=="1234"){alert("Wrong");return;}
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("adminPanel").style.display="block";
   loadOrders();
-}
+  loadPrices();
+};
 
-/**********************
- 📦 LOAD LIVE ORDERS
-***********************/
-function loadOrders() {
-  const ordersDiv = document.getElementById("orders");
-  ordersDiv.innerHTML = "";
-
-  const orders = JSON.parse(localStorage.getItem("orders") || "[]");
-
-  if (orders.length === 0) {
-    ordersDiv.innerHTML = "<p>No orders</p>";
-    return;
-  }
-
-  orders.forEach((o, index) => {
-    const box = document.createElement("div");
-    box.style.border = "1px solid #444";
-    box.style.padding = "10px";
-    box.style.marginBottom = "10px";
-
-    let itemsHtml = "";
-    o.items.forEach(i => {
-      itemsHtml += `<li>${i.name} – ₹${i.price}</li>`;
+function loadOrders(){
+  onSnapshot(collection(db,"orders"), snap=>{
+    document.getElementById("orders").innerHTML="";
+    snap.forEach(d=>{
+      const o=d.data();
+      document.getElementById("orders").innerHTML+=`
+        <div class="card">
+          Table ${o.table}<br>
+          ${o.items.map(i=>i.name).join(", ")}<br>
+          ${o.status}
+        </div>`;
     });
-
-    box.innerHTML = `
-      <b>Table:</b> ${o.table}<br>
-      <b>Time:</b> ${o.time}<br>
-      <b>Status:</b> ${o.status}<br>
-      <ul>${itemsHtml}</ul>
-      ${
-        o.status === "Printed"
-          ? "<i>Already Printed</i>"
-          : `<button onclick="printOrder(${index})">Print</button>`
-      }
-    `;
-
-    ordersDiv.appendChild(box);
   });
 }
 
-/**********************
- 🖨️ PRINT + MARK PRINTED
-***********************/
-function printOrder(i) {
-  let orders = JSON.parse(localStorage.getItem("orders"));
-  orders[i].status = "Printed";
-  localStorage.setItem("orders", JSON.stringify(orders));
-
-  window.print();
-  loadOrders();
+function loadPrices(){
+  onSnapshot(collection(db,"menu"), snap=>{
+    const pe=document.getElementById("priceEditor");
+    pe.innerHTML="";
+    snap.forEach(d=>{
+      const m=d.data();
+      pe.innerHTML+=`
+        <div class="card">
+          ${m.name}
+          <input value="${m.price}"
+            onchange="updatePrice('${d.id}',this.value)">
+        </div>`;
+    });
+  });
 }
 
-/**********************
- 💰 PRICE EDITOR (VISIBLE)
-***********************/
-function loadPriceEditor() {
-  const pricesDiv = document.getElementById("priceEditor");
-  pricesDiv.innerHTML = "<p>Price editor coming next step</p>";
-}
-
-loadPriceEditor();
+window.updatePrice = async (id,val)=>{
+  await updateDoc(doc(db,"menu",id),{price:Number(val)});
+};
