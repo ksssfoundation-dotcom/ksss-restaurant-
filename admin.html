@@ -4,7 +4,14 @@
   <meta charset="UTF-8">
   <title>Admin Panel - KssS Restaurant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body{background:#111;color:#fff;font-family:Arial;margin:0;padding:15px}
+    input,button{padding:8px;margin:5px}
+    .order{border:1px solid #333;padding:10px;margin:10px 0}
+    button{cursor:pointer}
+    .printed{opacity:0.6}
+  </style>
 </head>
 <body>
 
@@ -18,11 +25,75 @@
 <div id="adminPanel" style="display:none;">
   <h3>Live Orders</h3>
   <div id="orders"></div>
-
-  <h3>Edit Prices</h3>
-  <div id="priceEditor"></div>
 </div>
 
-<script src="js/admin.js"></script>
+<!-- 🔥 FIREBASE ADMIN LOGIC -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  /* 🔐 Firebase config */
+  const firebaseConfig = {
+    apiKey: "AIzaSyDT7ZsaAd3R4UWf0RvdQ27UblO2gxr14z0",
+    authDomain: "ksss-restaurant-7d0cb.firebaseapp.com",
+    projectId: "ksss-restaurant-7d0cb",
+    storageBucket: "ksss-restaurant-7d0cb.appspot.com",
+    messagingSenderId: "598407397418",
+    appId: "1:598407397418:web:92a95f0b4fd95c48518353"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  /* 🔑 SIMPLE ADMIN PASSWORD */
+  const ADMIN_PASS = "1234";
+
+  window.login = () => {
+    if(document.getElementById("adminPass").value === ADMIN_PASS){
+      document.getElementById("loginBox").style.display="none";
+      document.getElementById("adminPanel").style.display="block";
+      loadOrders();
+    } else {
+      alert("Wrong password");
+    }
+  };
+
+  /* 📥 REAL-TIME ORDERS */
+  function loadOrders(){
+    const q = query(collection(db,"orders"), orderBy("created","desc"));
+
+    onSnapshot(q, snap=>{
+      const box = document.getElementById("orders");
+      box.innerHTML = "";
+
+      snap.forEach(d=>{
+        const o = d.data();
+        const div = document.createElement("div");
+        div.className = "order " + (o.status==="Printed"?"printed":"");
+
+        div.innerHTML = `
+          <b>Table:</b> ${o.table}<br>
+          <b>Items:</b><br>
+          ${o.items.map(i=>`• ${i.name} ₹${i.price}`).join("<br>")}
+          <br><b>Status:</b> ${o.status}<br><br>
+          ${o.status!=="Printed"?
+            `<button onclick="printOrder('${d.id}')">Print</button>` :
+            `<button disabled>Printed</button>`
+          }
+        `;
+        box.appendChild(div);
+      });
+    });
+  }
+
+  /* 🖨 PRINT + MARK PRINTED */
+  window.printOrder = async (id)=>{
+    window.print();
+    await updateDoc(doc(db,"orders",id),{status:"Printed"});
+  };
+
+</script>
+
 </body>
 </html>
