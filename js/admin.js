@@ -1,57 +1,79 @@
+/**********************
+ 🔐 SIMPLE ADMIN LOGIN
+***********************/
 const PASS = "1234";
 
 function login() {
-  if(document.getElementById("adminPass").value === PASS) {
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("adminPanel").style.display="block";
-    loadOrders();
-    loadPriceEditor();
-  } else {
+  const p = document.getElementById("adminPass").value;
+  if (p !== PASS) {
     alert("Wrong password");
+    return;
   }
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("adminPanel").style.display = "block";
+  loadOrders();
 }
 
+/**********************
+ 📦 LOAD LIVE ORDERS
+***********************/
 function loadOrders() {
   const ordersDiv = document.getElementById("orders");
-  let orders = JSON.parse(localStorage.getItem("orders")) || [];
   ordersDiv.innerHTML = "";
-  orders.forEach((o, i) => {
-    ordersDiv.innerHTML += `
-      <div>
-        <b>Table ${o.table}</b> (${o.time})<br>
-        ${o.items.map(it => it.name + " ₹"+it.price).join("<br>")}
-        <br>Status: ${o.status}
-        <br><button onclick="printBill(${i})">Print</button>
-        <hr>
-      </div>
+
+  const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+
+  if (orders.length === 0) {
+    ordersDiv.innerHTML = "<p>No orders</p>";
+    return;
+  }
+
+  orders.forEach((o, index) => {
+    const box = document.createElement("div");
+    box.style.border = "1px solid #444";
+    box.style.padding = "10px";
+    box.style.marginBottom = "10px";
+
+    let itemsHtml = "";
+    o.items.forEach(i => {
+      itemsHtml += `<li>${i.name} – ₹${i.price}</li>`;
+    });
+
+    box.innerHTML = `
+      <b>Table:</b> ${o.table}<br>
+      <b>Time:</b> ${o.time}<br>
+      <b>Status:</b> ${o.status}<br>
+      <ul>${itemsHtml}</ul>
+      ${
+        o.status === "Printed"
+          ? "<i>Already Printed</i>"
+          : `<button onclick="printOrder(${index})">Print</button>`
+      }
     `;
+
+    ordersDiv.appendChild(box);
   });
 }
 
-function printBill(i) {
+/**********************
+ 🖨️ PRINT + MARK PRINTED
+***********************/
+function printOrder(i) {
   let orders = JSON.parse(localStorage.getItem("orders"));
   orders[i].status = "Printed";
   localStorage.setItem("orders", JSON.stringify(orders));
+
   window.print();
   loadOrders();
 }
 
+/**********************
+ 💰 PRICE EDITOR (VISIBLE)
+***********************/
 function loadPriceEditor() {
-  const div = document.getElementById("priceEditor");
-  let items = JSON.parse(localStorage.getItem("menuItems"));
-  div.innerHTML = "";
-  items.forEach((item, i) => {
-    div.innerHTML += `
-      ${item.name} 
-      <input type="number" value="${item.price}"
-      onchange="updatePrice(${i}, this.value)">
-      <br>
-    `;
-  });
+  const pricesDiv = document.getElementById("priceEditor");
+  pricesDiv.innerHTML = "<p>Price editor coming next step</p>";
 }
 
-function updatePrice(i, price) {
-  let items = JSON.parse(localStorage.getItem("menuItems"));
-  items[i].price = Number(price);
-  localStorage.setItem("menuItems", JSON.stringify(items));
-}
+loadPriceEditor();
